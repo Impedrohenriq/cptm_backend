@@ -1,0 +1,25 @@
+## Visual Studio / .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.log
+
+## Segredos e configurações locais
+appsettings.Development.json
+appsettings.Local.json
+*.pfx
+*.p12
+
+## NuGet
+packages/
+*.nupkg
+.nuget/
+
+## Rider
+.idea/
+
+## OS
+.DS_Store
+Thumbs.db
