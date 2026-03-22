@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
 
     public DbSet<FormularioEfluente> Formularios { get; set; }
     public DbSet<FotoEfluente>       Fotos       { get; set; }
+      public DbSet<UsuarioApp>         Usuarios    { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,6 +64,63 @@ public class AppDbContext : DbContext
 
             entity.Property(e => e.DsOrientacao)
                   .HasDefaultValue("Paisagem/Horizontal");
+        });
+
+        // ── TB_USUARIO_APP ─────────────────────────────────────────────
+        modelBuilder.Entity<UsuarioApp>(entity =>
+        {
+            entity.ToTable("TB_USUARIO_APP");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                  .HasColumnName("ID")
+                  .HasMaxLength(36)
+                  .IsRequired();
+
+            entity.Property(e => e.Email)
+                  .HasColumnName("EMAIL")
+                  .HasMaxLength(180)
+                  .IsRequired();
+
+            entity.Property(e => e.PasswordHash)
+                  .HasColumnName("PASSWORD_HASH")
+                  .HasMaxLength(128)
+                  .IsRequired();
+
+            entity.Property(e => e.PasswordSalt)
+                  .HasColumnName("PASSWORD_SALT")
+                  .HasMaxLength(64)
+                  .IsRequired();
+
+            entity.Property(e => e.IsGestor)
+                  .HasColumnName("IS_GESTOR")
+                  .HasColumnType("NUMBER(1)")
+                  .HasDefaultValue(false);
+
+            entity.Property(e => e.NomeExibicao)
+                  .HasColumnName("NOME_EXIBICAO")
+                  .HasMaxLength(120)
+                  .IsRequired();
+
+            entity.Property(e => e.Cargo)
+                  .HasColumnName("CARGO")
+                  .HasMaxLength(60)
+                  .IsRequired();
+
+            entity.Property(e => e.Linha)
+                  .HasColumnName("LINHA")
+                  .HasMaxLength(80)
+                  .IsRequired();
+
+            entity.Property(e => e.CriadoEmUtc)
+                  .HasColumnName("CRIADO_EM_UTC")
+                  .HasColumnType("TIMESTAMP(6)")
+                  .IsRequired();
+
+            entity.HasIndex(e => e.Email)
+                  .IsUnique()
+                  .HasDatabaseName("UQ_USUARIO_APP_EMAIL");
         });
     }
 }

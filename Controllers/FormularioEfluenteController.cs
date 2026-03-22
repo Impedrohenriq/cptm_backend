@@ -78,10 +78,13 @@ public class FormularioEfluenteController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (await _db.Formularios.AnyAsync(f => f.ChavePrimariaMa == dto.ChavePrimariaMa))
+        var jaExiste = await _db.Formularios
+            .CountAsync(f => f.ChavePrimariaMa == dto.ChavePrimariaMa) > 0;
+        if (jaExiste)
             return Conflict($"Já existe um formulário com a chave '{dto.ChavePrimariaMa}'.");
 
         var model = ToModel(dto);
+        AplicarTimestampServidor(model);
         AdicionarFotos(model, dto.Fotos);
 
         _db.Formularios.Add(model);
@@ -115,6 +118,7 @@ public class FormularioEfluenteController : ControllerBase
         if (existente is null) return NotFound();
 
         AtualizarModel(existente, dto);
+        AplicarTimestampServidor(existente);
 
         // Substituição completa das fotos
         _db.Fotos.RemoveRange(existente.Fotos);
@@ -272,6 +276,13 @@ public class FormularioEfluenteController : ControllerBase
         m.CdGuiaRemessa          = dto.CdGuiaRemessa;
         m.NrDistanciaViaM        = dto.NrDistanciaViaM;
         m.DsObservacoesCadastro  = dto.DsObservacoesCadastro;
+    }
+
+    private static void AplicarTimestampServidor(FormularioEfluente m)
+    {
+        var now = DateTime.Now;
+        m.DtCadastramento = now;
+        m.HrCadastramento = now.ToString("HH:mm");
     }
 
     private static void AdicionarFotos(FormularioEfluente model, List<FotoDto>? fotos)
