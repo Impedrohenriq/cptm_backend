@@ -99,7 +99,60 @@ Impacto pratico:
 
 - recarregar o app nao perde fotos anexadas offline
 - o envio continua compativel com o backend atual
-- o backend continua salvando em `BLOB` no Oracle sem mudanca de schema
+- o backend envia imagens para Azure Blob Storage e salva apenas a URL no Oracle
+
+## Armazenamento de Fotos no Azure Blob
+
+### Modo atual para testes locais (sem Azure pronto)
+
+Enquanto o ambiente Azure nao estiver pronto, deixe no `appsettings.Development.json`:
+
+- `AzureBlob:Enabled = false`
+
+Com isso:
+
+- a API continua funcionando normalmente para criar/listar/editar formularios
+- o envio do formulario nao quebra por falta de Azurite/Azure
+- fotos sem URL valida sao ignoradas no backend durante os testes
+
+Quando estiver testando sem upload de imagem, esse modo e o recomendado.
+
+As fotos do formulario agora seguem este fluxo no backend:
+
+1. frontend envia `fotoBase64` e `mimeType`
+2. API faz upload no container Azure Blob
+3. Oracle grava somente `DS_URL_FOTO` na tabela `TB_FDC_EEA_EF_FOTO`
+4. ao consultar o formulario, a API retorna `fotoUrl`
+
+Para visualizar a imagem:
+
+- copie a URL salva em `DS_URL_FOTO`
+- abra no navegador
+
+Configuracao esperada em `appsettings`:
+
+- `AzureBlob:Enabled` (`true` para ativar upload; `false` para desativar temporariamente)
+- `AzureBlob:ConnectionString`
+- `AzureBlob:ContainerName`
+- `AzureBlob:PublicAccess` (`true` para URL abrir direto no navegador sem SAS)
+
+### Checklist para ativar quando o Azure estiver pronto
+
+1. Criar Storage Account no Azure.
+2. Criar container de imagens (ex.: `inspecoes-efluente`).
+3. Configurar `ConnectionString` valida da Storage Account.
+4. Definir `AzureBlob:ContainerName` com o nome do container criado.
+5. Definir `AzureBlob:Enabled = true`.
+6. (Opcional) Definir `AzureBlob:PublicAccess = true` para abrir URL direta.
+7. Reiniciar a API.
+
+Resumo de ativacao:
+
+- `appsettings.Development.json` durante testes sem Azure:
+   - `Enabled: false`
+- quando Azure estiver pronto:
+   - `Enabled: true`
+   - preencher `ConnectionString` e `ContainerName`
 
 ## Backend
 

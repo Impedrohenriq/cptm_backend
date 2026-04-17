@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using CPTM_Backend.Data;
 using CPTM_Backend.DTOs;
 using CPTM_Backend.Models;
+using System.Text.RegularExpressions;
 
 namespace CPTM_Backend.Controllers;
 
@@ -69,19 +70,15 @@ public class FormularioEfluenteController : ControllerBase
     // ----------------------------------------------------------------
     // POST api/formularios-efluente
     // ----------------------------------------------------------------
-    /// <summary>Cria um novo formulário. A ChavePrimariaMa deve ser única.</summary>
+    /// <summary>Cria um novo formulário. A ChavePrimariaMa é sempre gerada pelo backend.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Criar([FromBody] FormularioEfluenteDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        var jaExiste = await _db.Formularios
-            .CountAsync(f => f.ChavePrimariaMa == dto.ChavePrimariaMa) > 0;
-        if (jaExiste)
-            return Conflict($"Já existe um formulário com a chave '{dto.ChavePrimariaMa}'.");
+        dto.ChavePrimariaMa = await GerarChavePrimariaMaAsync(dto);
 
         var model = ToModel(dto);
         AplicarTimestampServidor(model);
@@ -107,6 +104,9 @@ public class FormularioEfluenteController : ControllerBase
     public async Task<IActionResult> Atualizar(string chavePrimaria, [FromBody] FormularioEfluenteDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        if (string.IsNullOrWhiteSpace(dto.ChavePrimariaMa))
+            dto.ChavePrimariaMa = chavePrimaria;
 
         if (chavePrimaria != dto.ChavePrimariaMa)
             return BadRequest("A chave primária do URL e do corpo devem ser iguais.");
@@ -224,7 +224,7 @@ public class FormularioEfluenteController : ControllerBase
 
     private static void AtualizarModel(FormularioEfluente m, FormularioEfluenteDto dto)
     {
-        m.ChavePrimariaMa        = dto.ChavePrimariaMa;
+        m.ChavePrimariaMa        = dto.ChavePrimariaMa ?? string.Empty;
         m.NrElementoMonit        = dto.NrElementoMonit;
         m.NmElementoMonit        = dto.NmElementoMonit;
         m.NmContratada           = dto.NmContratada;
@@ -276,6 +276,59 @@ public class FormularioEfluenteController : ControllerBase
         m.CdGuiaRemessa          = dto.CdGuiaRemessa;
         m.NrDistanciaViaM        = dto.NrDistanciaViaM;
         m.DsObservacoesCadastro  = dto.DsObservacoesCadastro;
+    }
+
+    private async Task<string> GerarChavePrimariaMaAsync(FormularioEfluenteDto dto)
+    {
+        var ano = dto.DtEmissaoFormulario.Year > 1900
+            ? dto.DtEmissaoFormulario.Year
+            : DateTime.Now.Year;
+
+        var linhaNumero = ExtrairNumeroLinha(dto.NmLinhaCptm);
+        var sigla = ExtrairSiglaContratada(dto.NmContratada);
+        var prefix = $"EEA.EF-A.{ano}-L.{linhaNumero}-{sigla}-N.";
+
+        var chavesExistentes = await _db.Formularios
+            .AsNoTracking()
+            .Where(f => f.ChavePrimariaMa.StartsWith(prefix))
+            .Select(f => f.ChavePrimariaMa)
+            .ToListAsync();
+
+        var proximoSequencial = chavesExistentes
+            .Select(ExtrairSequencialChavePrimaria)
+            .DefaultIfEmpty(0)
+            .Max() + 1;
+
+        return $"{prefix}{proximoSequencial:0000}";
+    }
+
+    private static string ExtrairNumeroLinha(string? linha)
+    {
+        var numero = Regex.Match(linha ?? string.Empty, @"\d+").Value;
+        if (string.IsNullOrWhiteSpace(numero)) return "00";
+
+        if (numero.Length >= 2) return numero[..2];
+        return numero.PadLeft(2, '0');
+    }
+
+    private static string ExtrairSiglaContratada(string? contratada)
+    {
+        var raw = string.IsNullOrWhiteSpace(contratada)
+            ? "CPTM"
+            : contratada.Split('-', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim() ?? "CPTM";
+
+        var sanitized = Regex.Replace(raw.ToUpperInvariant(), @"[^A-Z0-9]", string.Empty);
+        if (string.IsNullOrWhiteSpace(sanitized)) return "CPTM";
+
+        return sanitized.Length > 10 ? sanitized[..10] : sanitized;
+    }
+
+    private static int ExtrairSequencialChavePrimaria(string? chavePrimaria)
+    {
+        var match = Regex.Match(chavePrimaria ?? string.Empty, @"-N\.(\d+)(?:-\d+)?$");
+        if (!match.Success) return 0;
+
+        return int.TryParse(match.Groups[1].Value, out var sequencial) ? sequencial : 0;
     }
 
     private static void AplicarTimestampServidor(FormularioEfluente m)

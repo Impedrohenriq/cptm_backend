@@ -10,7 +10,7 @@ public class FormularioEfluenteDto
 {
     // ── Seção 5: Identificação do E.M. ──────────────────────
     /// <summary>BD_01=1 | Chave Primária - Meio Ambiente | Auto</summary>
-    public string ChavePrimariaMa { get; set; } = string.Empty;
+    public string? ChavePrimariaMa { get; set; }
 
     /// <summary>BD_01=2 | Elemento de Monitoramento – Número (000001–999999)</summary>
     [Required] [MaxLength(6)]
