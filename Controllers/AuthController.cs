@@ -179,7 +179,7 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(key) || key.Length < 32)
             throw new InvalidOperationException("Jwt:Key nao configurada corretamente.");
 
-        var expiresAtUtc = DateTime.UtcNow.AddHours(8);
+        var expiresAtUtc = DateTime.UtcNow.AddHours(6);
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             SecurityAlgorithms.HmacSha256);

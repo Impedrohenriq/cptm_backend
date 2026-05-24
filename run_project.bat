@@ -9,7 +9,7 @@ for %%I in ("%BACKEND_DIR%\..") do set "ROOT_DIR=%%~fI"
 set "FRONTEND_DIR=%ROOT_DIR%\CPTM_Frontend"
 
 echo.
-echo [1/3] Validando pastas do projeto...
+echo [1/4] Validando pastas do projeto...
 if not exist "%BACKEND_DIR%\CPTM_Backend.csproj" (
   echo [ERRO] Backend nao encontrado em %BACKEND_DIR%
   exit /b 1
@@ -19,15 +19,26 @@ if not exist "%FRONTEND_DIR%\package.json" (
   exit /b 1
 )
 
-echo [2/3] Iniciando backend...
-start "CPTM Backend" cmd /k "cd /d "%BACKEND_DIR%" && dotnet run"
+echo [2/4] Encerrando processos antigos nas portas 5000, 5001 e 5173...
+for %%P in (5000 5001 5173) do (
+  for /f "tokens=5" %%A in ('netstat -ano ^| findstr /R /C:":%%P .*LISTENING"') do (
+    echo - Porta %%P: finalizando PID %%A
+    taskkill /PID %%A /F >nul 2>&1
+  )
+)
 
-echo [3/3] Iniciando frontend...
+echo [3/4] Iniciando backend...
+start "CPTM Backend" cmd /k "cd /d "%BACKEND_DIR%" && dotnet run --launch-profile https"
+
+echo Aguardando backend estabilizar...
+timeout /t 6 /nobreak >nul
+
+echo [4/4] Iniciando frontend...
 start "CPTM Frontend" cmd /k "cd /d "%FRONTEND_DIR%" && npm run dev -- --host"
 
 echo.
 echo Projeto iniciado em janelas separadas.
-echo Backend: http://localhost:5000
+echo Backend: https://localhost:5001
 echo Frontend: http://localhost:5173
 echo.
 echo Para parar: feche as janelas "CPTM Backend" e "CPTM Frontend".
