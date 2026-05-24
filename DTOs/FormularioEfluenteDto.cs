@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace CPTM_Backend.DTOs;
 
 // ============================================================
-//  DTO principal – espelha exatamente as 51 colunas do CSV
+//  DTO principal – espelha os atributos do CSV BD_01 usados no formulário
 //  (seções 1–7.2) + lista de fotos (seção 7.3)
 // ============================================================
 public class FormularioEfluenteDto
@@ -40,6 +40,14 @@ public class FormularioEfluenteDto
     /// <summary>BD_01=4 | Sigla da Área de Meio Ambiente | Domínio: GEA_TX_SIGLA_DEPTO_MEIO_AMBIENTE</summary>
     [MaxLength(20)]
     public string? SgAreaMeioAmbiente { get; set; }
+
+    /// <summary>BD_01=5 | Status do Desvio Ambiental | Domínio: GEA_TX_STATUS_DO_DESVIO_AMBIENTAL</summary>
+    [MaxLength(50)]
+    public string? DsStatusDesvioAmbiental { get; set; }
+
+    /// <summary>BD_01=6 | Status do Registro no Banco de Dados | Domínio: GEA_TX_STATUS_DO_REGISTRO_NO_BD</summary>
+    [MaxLength(50)]
+    public string? DsStatusRegistroBd { get; set; }
 
     /// <summary>BD_01=54 | Nome da Área Gestora CPTM | Domínio: GEA_TX_NM_AREA_GESTORA_CPTM</summary>
     [MaxLength(200)]
@@ -143,6 +151,12 @@ public class FormularioEfluenteDto
     /// <summary>BD_01=14 | Longitude – Datum WGS84 (ex: -46.123456)</summary>
     public decimal? NrLongitude { get; set; }
 
+    /// <summary>BD_01=15 | Latitude em Metros – Datum SIRGAS2000 (ex: 325.421)</summary>
+    public decimal? NrLatitudeSirgas2000 { get; set; }
+
+    /// <summary>BD_01=16 | Longitude em Metros – Datum SIRGAS2000 (ex: 7456589.000)</summary>
+    public decimal? NrLongitudeSirgas2000 { get; set; }
+
     // ── Seção 7.1: Regulamentação Ambiental ─────────────────
     /// <summary>BD_01=24 | Tipo de Atividade (Listada) | Domínio: EF_TX_TIPO_ATIVIDADE_LISTADA</summary>
     [MaxLength(100)]
@@ -166,6 +180,10 @@ public class FormularioEfluenteDto
 
     /// <summary>BD_01=29 | Data de Validade do DRA</summary>
     public DateTime? DtValidadeDra { get; set; }
+
+    /// <summary>BD_01=30 | Análise CPTM para Aprovação</summary>
+    [MaxLength(255)]
+    public string? DsAnaliseCptmAprovacao { get; set; }
 
     // ── Seção 7.2: Detalhamento ──────────────────────────────
     /// <summary>BD_01=31 | Tipo de Atividade na CPTM | Domínio: EF_TX_TIPO_ATIVIDADE_CPTM</summary>
@@ -210,9 +228,61 @@ public class FormularioEfluenteDto
     /// <summary>BD_01=41 | Distância da Via CPTM (Metros)</summary>
     public decimal? NrDistanciaViaM { get; set; }
 
-    /// <summary>BD_01=44 | Observações Gerais: Cadastramento (≤255 chars)</summary>
-    [MaxLength(255)]
+    /// <summary>BD_01=42 | Oferece risco aos Sistemas da CPTM? | Domínio: GEA_SIM_NAO</summary>
+    [MaxLength(30)]
+    public string? DsOfereceRiscoSistemaCptm { get; set; }
+
+    /// <summary>BD_01=43 | Domínio Territorial | Domínio: GEA_TX_PROPRIETARIO</summary>
+    [MaxLength(100)]
+    public string? DsDominioTerritorial { get; set; }
+
+    /// <summary>BD_01=44 | Observações Gerais: Cadastramento (≤2000 chars)</summary>
+    [MaxLength(2000)]
     public string? DsObservacoesCadastro { get; set; }
+
+    /// <summary>BD_01=47 | Autor(a) (PJ) do Cadastramento</summary>
+    [MaxLength(255)]
+    public string? NmAutorPjCadastramento { get; set; }
+
+    /// <summary>BD_01=23 | Nome da Empresa Executora</summary>
+    [MaxLength(255)]
+    public string? NmEmpresaExecutora { get; set; }
+
+    /// <summary>BD_01=59 | Nº do Contrato (da Supervisora)</summary>
+    [MaxLength(255)]
+    public string? NrContratoSupervisora { get; set; }
+
+    /// <summary>BD_01=62 | Nome do arquivo RVT relacionado</summary>
+    [MaxLength(255)]
+    public string? NmArquivoRvtRelacionado { get; set; }
+
+    /// <summary>BD_01=63 | Código do E.M. no RVT relacionado</summary>
+    [MaxLength(255)]
+    public string? CdElementoMonitorRvt { get; set; }
+
+    /// <summary>BD_01=64 | Nome do arquivo DAC relacionado</summary>
+    [MaxLength(255)]
+    public string? NmArquivoDacRelacionado { get; set; }
+
+    /// <summary>BD_01=65 | Código do E.M. na DAC relacionada</summary>
+    [MaxLength(255)]
+    public string? CdElementoMonitorDac { get; set; }
+
+    /// <summary>BD_01=66 | Nome do arquivo CNC relacionado</summary>
+    [MaxLength(255)]
+    public string? NmArquivoCncRelacionado { get; set; }
+
+    /// <summary>BD_01=67 | Código do E.M. na CNC relacionada</summary>
+    [MaxLength(255)]
+    public string? CdElementoMonitorCnc { get; set; }
+
+    /// <summary>BD_01=68 | Chave Primária no último RRA</summary>
+    [MaxLength(255)]
+    public string? CdUltimoRra { get; set; }
+
+    /// <summary>BD_01=69 | Chave Primária - Centro de Documentação (CEDOC)</summary>
+    [MaxLength(255)]
+    public string? CdCedoc { get; set; }
 
     // ── Seção 7.3: Registro Fotográfico (BD_02=1) ───────────
     /// <summary>Fotografias 1–4 (BD_01 70–73). Imagem como Base64.</summary>

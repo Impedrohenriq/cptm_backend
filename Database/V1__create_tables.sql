@@ -89,6 +89,14 @@ CREATE TABLE TB_FDC_EEA_EF (
     --   Exemplos: "GEA.DEAE", "GEA.DEAO"
     SG_AREA_MEIO_AMBIENTE       VARCHAR2(20),
 
+    -- BD_01=5 | Status do Desvio Ambiental | Editável | Cache
+    --   Domínio: GEA_TX_STATUS_DO_DESVIO_AMBIENTAL
+    DS_STATUS_DESVIO_AMBIENTAL  VARCHAR2(50),
+
+    -- BD_01=6 | Status do Registro no Banco de Dados | Editável | Cache
+    --   Domínio: GEA_TX_STATUS_DO_REGISTRO_NO_BD
+    DS_STATUS_REGISTRO_BD       VARCHAR2(50),
+
     -- BD_01=54 | Nome da Área Gestora CPTM | Editável | Cache
     --   Domínio: GEA_TX_NM_AREA_GESTORA_CPTM
     NM_AREA_GESTORA_CPTM        VARCHAR2(200),
@@ -105,6 +113,12 @@ CREATE TABLE TB_FDC_EEA_EF (
     --   Máximo: 89 chars.
     --   Exemplos: "Empresa Supervisora Ambiental Ltda - ESA", "GEA.DEAO"
     NM_SUPERVISORA_AMBIENTAL    VARCHAR2(89),
+
+    -- BD_01=23 | Nome da Empresa Executora
+    NM_EMPRESA_EXECUTORA        VARCHAR2(255),
+
+    -- BD_01=59 | Nº do Contrato (da Supervisora)
+    NR_CONTRATO_SUPERVISORA     VARCHAR2(255),
 
     -- ===================================================================
     -- SEÇÃO 2 – Identificação do Cadastrador e Responsável Técnico
@@ -203,6 +217,12 @@ CREATE TABLE TB_FDC_EEA_EF (
     --   Ex: -46.123456
     NR_LONGITUDE                NUMBER(12, 6),
 
+    -- BD_01=15 | Latitude em Metros – Datum SIRGAS2000 | Editável | Cache
+    NR_LATITUDE_SIRGAS2000      NUMBER(12, 3),
+
+    -- BD_01=16 | Longitude em Metros – Datum SIRGAS2000 | Editável | Cache
+    NR_LONGITUDE_SIRGAS2000     NUMBER(12, 3),
+
     -- ===================================================================
     -- SEÇÃO 7.1 – Regulamentação Ambiental
     -- ===================================================================
@@ -229,6 +249,9 @@ CREATE TABLE TB_FDC_EEA_EF (
 
     -- BD_01=29 | Data de Validade do DRA | Editável | Cache  (dd/mm/aaaa)
     DT_VALIDADE_DRA             DATE,
+
+    -- BD_01=30 | Análise CPTM para Aprovação
+    DS_ANALISE_CPTM_APROVACAO   VARCHAR2(255),
 
     -- ===================================================================
     -- SEÇÃO 7.2 – Detalhamento
@@ -278,9 +301,42 @@ CREATE TABLE TB_FDC_EEA_EF (
     --   Número decimal.  Padrão: "... ,00".  Ex: 7.58
     NR_DISTANCIA_VIA_M          NUMBER(10, 2),
 
+    -- BD_01=42 | Oferece risco aos Sistemas da CPTM? | Domínio: GEA_SIM_NAO
+    DS_OFERECE_RISCO_SIST_CPTM  VARCHAR2(30),
+
+    -- BD_01=43 | Domínio Territorial | Domínio: GEA_TX_PROPRIETARIO
+    DS_DOMINIO_TERRITORIAL      VARCHAR2(100),
+
     -- BD_01=44 | Observações Gerais: Cadastramento | Editável | Cache
-    --   Máximo: 255 caracteres
-    DS_OBSERVACOES_CADASTRO     VARCHAR2(255),
+    --   Máximo: 2000 caracteres
+    DS_OBSERVACOES_CADASTRO     VARCHAR2(2000),
+
+    -- BD_01=47 | Autor(a) (PJ) do Cadastramento
+    NM_AUTOR_PJ_CADASTRAMENTO   VARCHAR2(255),
+
+    -- BD_01=62 | Nome do arquivo RVT relacionado
+    NM_ARQUIVO_RVT_RELACIONADO  VARCHAR2(255),
+
+    -- BD_01=63 | Código do E.M. no RVT relacionado
+    CD_ELEMENTO_MONITOR_RVT     VARCHAR2(255),
+
+    -- BD_01=64 | Nome do arquivo DAC relacionado
+    NM_ARQUIVO_DAC_RELACIONADO  VARCHAR2(255),
+
+    -- BD_01=65 | Código do E.M. na DAC relacionada
+    CD_ELEMENTO_MONITOR_DAC     VARCHAR2(255),
+
+    -- BD_01=66 | Nome do arquivo CNC relacionado
+    NM_ARQUIVO_CNC_RELACIONADO  VARCHAR2(255),
+
+    -- BD_01=67 | Código do E.M. na CNC relacionada
+    CD_ELEMENTO_MONITOR_CNC     VARCHAR2(255),
+
+    -- BD_01=68 | Chave Primária no último RRA
+    CD_ULTIMO_RRA               VARCHAR2(255),
+
+    -- BD_01=69 | Chave Primária - CEDOC
+    CD_CEDOC                    VARCHAR2(255),
 
     -- ==== CONSTRAINTS ====
     CONSTRAINT PK_FDC_EEA_EF PRIMARY KEY (CHAVE_PRIMARIA_MA)

@@ -1,54 +1,124 @@
-# Database: Estado Atual e Evolucao Planejada
+# CPTM Database (Oracle)
 
-Este README documenta o estado atual do banco no backend e o plano de evolucao para fotos por URL.
+Documentacao da camada de banco de dados do projeto de efluentes.
 
-## Estado atual (em uso)
+Este README cobre modelagem, scripts, estrategia de evolucao e as ideias usadas no desenho do schema.
 
-- O backend atual salva fotografias em BLOB na coluna `BL_FOTO` da tabela `TB_FDC_EEA_EF_FOTO`.
-- O script alinhado com o backend atual e o `V0__create_database_full.sql`.
-- A modelagem base historica permanece no `V1__create_tables.sql`.
+## 1. Objetivo do Modelo
 
-Resumo:
+Persistir com integridade os dados do formulario FDC-EEA.EF, incluindo:
 
-- Fotos: `BL_FOTO` (BLOB)
-- Tabela de fotos: `TB_FDC_EEA_EF_FOTO`
-- Relacao: `TB_FDC_EEA_EF_FOTO.CHAVE_PRIMARIA_MA` -> `TB_FDC_EEA_EF.CHAVE_PRIMARIA_MA`
+- dados institucionais e tecnicos do cadastro;
+- registro fotografico associado;
+- usuarios da aplicacao.
 
-## Divergencia corrigida
+## 2. Tabelas Principais
 
-A divergencia entre script e backend foi corrigida para o estado atual:
+1. TB_FDC_EEA_EF
 
-- `V0__create_database_full.sql` agora esta coerente com persistencia em BLOB.
-- O bloco intermediario que migrava para `DS_URL_FOTO` no V0 foi removido para evitar incompatibilidade com a API atual.
+- tabela principal do formulario;
+- chave primaria: CHAVE_PRIMARIA_MA;
+- campos BD_01 ampliados (incluindo novos atributos de status, risco, rastreabilidade e coordenadas SIRGAS2000).
 
-## Evolucao planejada (futuro)
+2. TB_FDC_EEA_EF_FOTO
 
-Mais para frente, queremos atualizar a aplicacao para salvar fotos por URL no banco, em vez de BLOB.
+- fotos 1..4 por formulario;
+- FK para TB_FDC_EEA_EF;
+- coluna de imagem atual: BL_FOTO (BLOB);
+- unicidade por formulario e numero da foto.
 
-Direcao planejada:
+3. TB_USUARIO_APP
 
-1. Criar/usar coluna `DS_URL_FOTO` (VARCHAR2(1000)) na `TB_FDC_EEA_EF_FOTO`.
-2. Fazer upload de imagem para Azure Blob Storage no backend.
-3. Persistir somente URL (publica ou SAS) no banco.
-4. Migrar dados historicos de `BL_FOTO` para URL.
-5. Remover `BL_FOTO` somente apos validacao completa.
+- autenticacao local;
+- email unico;
+- controle de perfil gestor.
 
-## Quando iniciar a migracao para URL
+## 3. Scripts Disponiveis
 
-Passos recomendados:
+- [CPTM_Backend/Database/V0__create_database_full.sql](CPTM_Backend/Database/V0__create_database_full.sql)
+	script principal para criar tudo do zero, com opcao de carga de dados de exemplo.
 
-1. Atualizar modelo/DTO/controller para trafegar URL no lugar de Base64.
-2. Integrar de ponta a ponta com `AzureBlobStorageService`.
-3. Criar script de migracao para converter BLOB legado em URL.
-4. Adicionar testes de criacao, leitura e atualizacao com URL.
-5. So entao ajustar script principal para remover BLOB.
+- [CPTM_Backend/Database/V1__create_tables.sql](CPTM_Backend/Database/V1__create_tables.sql)
+	referencia historica da modelagem base.
 
-## Scripts no diretorio Database
+- [CPTM_Backend/Database/V2__add_missing_bd01_columns.sql](CPTM_Backend/Database/V2__add_missing_bd01_columns.sql)
+	migracao incremental idempotente para bancos existentes que ainda nao tenham as novas colunas BD_01.
 
-- `V0__create_database_full.sql`: script principal para criacao completa (estado atual BLOB).
-- `V1__create_tables.sql`: referencia historica da modelagem base.
+## 4. Como Aplicar os Scripts
 
-## Execucao do V0
+Nova base (recomendado):
 
-1. Estrutura apenas (padrao): manter `DEFINE V0_LOAD_SAMPLE_DATA = N`
-2. Estrutura + dados de exemplo/teste: alterar para `DEFINE V0_LOAD_SAMPLE_DATA = Y`
+1. executar V0.
+2. definir V0_LOAD_SAMPLE_DATA = Y apenas se quiser dados de exemplo.
+
+Base ja existente:
+
+1. executar V2 para adicionar colunas faltantes e ajustar tamanho de observacoes.
+
+## 5. Regras de Integridade
+
+Principais garantias do modelo:
+
+- PK em TB_FDC_EEA_EF por chave ambiental;
+- FK em TB_FDC_EEA_EF_FOTO com ON DELETE CASCADE;
+- CHECK NR_FOTO entre 1 e 4;
+- UNIQUE CHAVE_PRIMARIA_MA + NR_FOTO;
+- indices para consulta por data, natureza e localizacao.
+
+## 6. Decisoes Tecnicas Utilizadas
+
+1. Oracle como banco principal
+
+- aderencia ao contexto corporativo;
+- suporte robusto a constraints e governanca.
+
+2. Fotos em BLOB no estado atual
+
+- simplifica consistencia transacional no desenho atual;
+- elimina dependencia externa obrigatoria para salvar imagem.
+
+3. Evolucao por scripts incrementais
+
+- V2 permite atualizar ambiente sem recriar schema;
+- abordagem idempotente reduz risco em homologacao/producao.
+
+4. Nomes de colunas alinhados ao negocio
+
+- nomenclatura proxima do BD_01 para rastreabilidade funcional.
+
+## 7. Evolucao Planejada para Midia por URL
+
+Direcao futura:
+
+1. incluir DS_URL_FOTO em TB_FDC_EEA_EF_FOTO;
+2. mover upload para Azure Blob via backend;
+3. persistir URL no banco em vez de BLOB;
+4. migrar legado de BL_FOTO;
+5. remover BL_FOTO somente apos validacao completa.
+
+## 8. Validacoes Rapidas Pos-Deploy
+
+Exemplos de consultas de verificacao:
+
+		SELECT table_name FROM user_tables
+		WHERE table_name IN ('TB_FDC_EEA_EF', 'TB_FDC_EEA_EF_FOTO', 'TB_USUARIO_APP');
+
+		SELECT sequence_name FROM user_sequences
+		WHERE sequence_name = 'SQ_FDC_EEA_EF_FOTO';
+
+		SELECT column_name FROM user_tab_columns
+		WHERE table_name = 'TB_FDC_EEA_EF'
+			AND column_name IN (
+				'DS_STATUS_DESVIO_AMBIENTAL',
+				'DS_STATUS_REGISTRO_BD',
+				'NR_LATITUDE_SIRGAS2000',
+				'NR_LONGITUDE_SIRGAS2000',
+				'DS_ANALISE_CPTM_APROVACAO'
+			);
+
+## 9. Boas Praticas de Operacao
+
+- versionar mudancas de schema sempre por script incremental;
+- aplicar primeiro em dev, depois homolog e producao;
+- manter rotina de backup e plano de rollback;
+- nao executar alteracoes estruturais diretamente sem versionamento.

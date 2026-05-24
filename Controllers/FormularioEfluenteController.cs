@@ -163,11 +163,16 @@ public class FormularioEfluenteController : ControllerBase
             NmLocalEscopo           = m.NmLocalEscopo,
             NmRepresentante         = m.NmRepresentante,
             SgAreaMeioAmbiente      = m.SgAreaMeioAmbiente,
+            DsStatusDesvioAmbiental = m.DsStatusDesvioAmbiental,
+            DsStatusRegistroBd      = m.DsStatusRegistroBd,
             NmAreaGestoraCptm       = m.NmAreaGestoraCptm,
             CdIdentAreaGestora      = m.CdIdentAreaGestora,
             SgAreaGestoraCptm       = m.SgAreaGestoraCptm,
             NmSupervisoraAmbiental  = m.NmSupervisoraAmbiental,
+            NmEmpresaExecutora      = m.NmEmpresaExecutora,
+            NrContratoSupervisora   = m.NrContratoSupervisora,
             NmAutorCadastramento    = m.NmAutorCadastramento,
+            NmAutorPjCadastramento  = m.NmAutorPjCadastramento,
             NmResponsavelTecnico    = m.NmResponsavelTecnico,
             NrRegistroProfissional  = m.NrRegistroProfissional,
             DsDocRespTecnica        = m.DsDocRespTecnica,
@@ -188,12 +193,15 @@ public class FormularioEfluenteController : ControllerBase
             NrKmPoste               = m.NrKmPoste,
             NrLatitude              = m.NrLatitude,
             NrLongitude             = m.NrLongitude,
+            NrLatitudeSirgas2000    = m.NrLatitudeSirgas2000,
+            NrLongitudeSirgas2000   = m.NrLongitudeSirgas2000,
             DsTipoAtividadeList     = m.DsTipoAtividadeList,
             DsTipoAtividadeNlist    = m.DsTipoAtividadeNlist,
             DsTipoDraList           = m.DsTipoDraList,
             DsTipoDraNlist          = m.DsTipoDraNlist,
             CdIdentificadorDra      = m.CdIdentificadorDra,
             DtValidadeDra           = m.DtValidadeDra,
+            DsAnaliseCptmAprovacao  = m.DsAnaliseCptmAprovacao,
             DsTipoAtividadeCptm     = m.DsTipoAtividadeCptm,
             NmLocalEdificacao       = m.NmLocalEdificacao,
             DsLocalComplemento      = m.DsLocalComplemento,
@@ -205,7 +213,17 @@ public class FormularioEfluenteController : ControllerBase
             CdPlacaVeiculo          = m.CdPlacaVeiculo,
             CdGuiaRemessa           = m.CdGuiaRemessa,
             NrDistanciaViaM         = m.NrDistanciaViaM,
+            DsOfereceRiscoSistemaCptm = m.DsOfereceRiscoSistemaCptm,
+            DsDominioTerritorial    = m.DsDominioTerritorial,
             DsObservacoesCadastro   = m.DsObservacoesCadastro,
+            NmArquivoRvtRelacionado = m.NmArquivoRvtRelacionado,
+            CdElementoMonitorRvt    = m.CdElementoMonitorRvt,
+            NmArquivoDacRelacionado = m.NmArquivoDacRelacionado,
+            CdElementoMonitorDac    = m.CdElementoMonitorDac,
+            NmArquivoCncRelacionado = m.NmArquivoCncRelacionado,
+            CdElementoMonitorCnc    = m.CdElementoMonitorCnc,
+            CdUltimoRra             = m.CdUltimoRra,
+            CdCedoc                 = m.CdCedoc,
             Fotos = fotos?.Select(f => new FotoDto
             {
                 IdFoto       = f.IdFoto,
@@ -232,11 +250,16 @@ public class FormularioEfluenteController : ControllerBase
         m.NmLocalEscopo          = dto.NmLocalEscopo;
         m.NmRepresentante        = dto.NmRepresentante;
         m.SgAreaMeioAmbiente     = dto.SgAreaMeioAmbiente;
+        m.DsStatusDesvioAmbiental = dto.DsStatusDesvioAmbiental;
+        m.DsStatusRegistroBd     = dto.DsStatusRegistroBd;
         m.NmAreaGestoraCptm      = dto.NmAreaGestoraCptm;
         m.CdIdentAreaGestora     = dto.CdIdentAreaGestora;
         m.SgAreaGestoraCptm      = dto.SgAreaGestoraCptm;
         m.NmSupervisoraAmbiental = dto.NmSupervisoraAmbiental;
+        m.NmEmpresaExecutora     = dto.NmEmpresaExecutora;
+        m.NrContratoSupervisora  = dto.NrContratoSupervisora;
         m.NmAutorCadastramento   = dto.NmAutorCadastramento;
+        m.NmAutorPjCadastramento = dto.NmAutorPjCadastramento;
         m.NmResponsavelTecnico   = dto.NmResponsavelTecnico;
         m.NrRegistroProfissional = dto.NrRegistroProfissional;
         m.DsDocRespTecnica       = dto.DsDocRespTecnica;
@@ -258,12 +281,15 @@ public class FormularioEfluenteController : ControllerBase
         m.NrKmPoste              = dto.NrKmPoste;
         m.NrLatitude             = dto.NrLatitude;
         m.NrLongitude            = dto.NrLongitude;
+        m.NrLatitudeSirgas2000   = dto.NrLatitudeSirgas2000;
+        m.NrLongitudeSirgas2000  = dto.NrLongitudeSirgas2000;
         m.DsTipoAtividadeList    = dto.DsTipoAtividadeList;
         m.DsTipoAtividadeNlist   = dto.DsTipoAtividadeNlist;
         m.DsTipoDraList          = dto.DsTipoDraList;
         m.DsTipoDraNlist         = dto.DsTipoDraNlist;
         m.CdIdentificadorDra     = dto.CdIdentificadorDra;
         m.DtValidadeDra          = dto.DtValidadeDra;
+        m.DsAnaliseCptmAprovacao = dto.DsAnaliseCptmAprovacao;
         m.DsTipoAtividadeCptm    = dto.DsTipoAtividadeCptm;
         m.NmLocalEdificacao      = dto.NmLocalEdificacao;
         m.DsLocalComplemento     = dto.DsLocalComplemento;
@@ -275,7 +301,17 @@ public class FormularioEfluenteController : ControllerBase
         m.CdPlacaVeiculo         = dto.CdPlacaVeiculo;
         m.CdGuiaRemessa          = dto.CdGuiaRemessa;
         m.NrDistanciaViaM        = dto.NrDistanciaViaM;
+        m.DsOfereceRiscoSistemaCptm = dto.DsOfereceRiscoSistemaCptm;
+        m.DsDominioTerritorial   = dto.DsDominioTerritorial;
         m.DsObservacoesCadastro  = dto.DsObservacoesCadastro;
+        m.NmArquivoRvtRelacionado = dto.NmArquivoRvtRelacionado;
+        m.CdElementoMonitorRvt   = dto.CdElementoMonitorRvt;
+        m.NmArquivoDacRelacionado = dto.NmArquivoDacRelacionado;
+        m.CdElementoMonitorDac   = dto.CdElementoMonitorDac;
+        m.NmArquivoCncRelacionado = dto.NmArquivoCncRelacionado;
+        m.CdElementoMonitorCnc   = dto.CdElementoMonitorCnc;
+        m.CdUltimoRra            = dto.CdUltimoRra;
+        m.CdCedoc                = dto.CdCedoc;
     }
 
     private async Task<string> GerarChavePrimariaMaAsync(FormularioEfluenteDto dto)

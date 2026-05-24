@@ -72,6 +72,16 @@ public class FormularioEfluente
     [MaxLength(20)]
     public string? SgAreaMeioAmbiente { get; set; }
 
+    /// <summary>BD_01=5 | Status do Desvio Ambiental | Domínio: GEA_TX_STATUS_DO_DESVIO_AMBIENTAL</summary>
+    [Column("DS_STATUS_DESVIO_AMBIENTAL")]
+    [MaxLength(50)]
+    public string? DsStatusDesvioAmbiental { get; set; }
+
+    /// <summary>BD_01=6 | Status do Registro no Banco de Dados | Domínio: GEA_TX_STATUS_DO_REGISTRO_NO_BD</summary>
+    [Column("DS_STATUS_REGISTRO_BD")]
+    [MaxLength(50)]
+    public string? DsStatusRegistroBd { get; set; }
+
     /// <summary>BD_01=54 | Nome da Área Gestora CPTM | Editável | Cache
     /// Domínio: GEA_TX_NM_AREA_GESTORA_CPTM</summary>
     [Column("NM_AREA_GESTORA_CPTM")]
@@ -236,6 +246,16 @@ public class FormularioEfluente
     [Column("NR_LONGITUDE")]
     public decimal? NrLongitude { get; set; }
 
+    /// <summary>BD_01=15 | Latitude em Metros – Datum SIRGAS2000 | Editável | Cache
+    /// Ex: 325.421</summary>
+    [Column("NR_LATITUDE_SIRGAS2000")]
+    public decimal? NrLatitudeSirgas2000 { get; set; }
+
+    /// <summary>BD_01=16 | Longitude em Metros – Datum SIRGAS2000 | Editável | Cache
+    /// Ex: 7456589.000</summary>
+    [Column("NR_LONGITUDE_SIRGAS2000")]
+    public decimal? NrLongitudeSirgas2000 { get; set; }
+
     // ===================================================================
     // SEÇÃO 7.1 – Regulamentação Ambiental
     // ===================================================================
@@ -273,6 +293,11 @@ public class FormularioEfluente
     /// <summary>BD_01=29 | Data de Validade do DRA | Editável | Cache</summary>
     [Column("DT_VALIDADE_DRA")]
     public DateTime? DtValidadeDra { get; set; }
+
+    /// <summary>BD_01=30 | Análise CPTM para Aprovação | Editável</summary>
+    [Column("DS_ANALISE_CPTM_APROVACAO")]
+    [MaxLength(255)]
+    public string? DsAnaliseCptmAprovacao { get; set; }
 
     // ===================================================================
     // SEÇÃO 7.2 – Detalhamento
@@ -342,11 +367,76 @@ public class FormularioEfluente
     [Column("NR_DISTANCIA_VIA_M")]
     public decimal? NrDistanciaViaM { get; set; }
 
+    /// <summary>BD_01=42 | Oferece risco aos Sistemas da CPTM? | Domínio: GEA_SIM_NAO</summary>
+    [Column("DS_OFERECE_RISCO_SIST_CPTM")]
+    [MaxLength(30)]
+    public string? DsOfereceRiscoSistemaCptm { get; set; }
+
+    /// <summary>BD_01=43 | Domínio Territorial | Domínio: GEA_TX_PROPRIETARIO</summary>
+    [Column("DS_DOMINIO_TERRITORIAL")]
+    [MaxLength(100)]
+    public string? DsDominioTerritorial { get; set; }
+
     /// <summary>BD_01=44 | Observações Gerais: Cadastramento | Editável | Cache
-    /// Máx: 255 chars.</summary>
+    /// Máx: 2000 chars.</summary>
     [Column("DS_OBSERVACOES_CADASTRO")]
-    [MaxLength(255)]
+    [MaxLength(2000)]
     public string? DsObservacoesCadastro { get; set; }
+
+    /// <summary>BD_01=47 | Autor(a) (PJ) do Cadastramento</summary>
+    [Column("NM_AUTOR_PJ_CADASTRAMENTO")]
+    [MaxLength(255)]
+    public string? NmAutorPjCadastramento { get; set; }
+
+    /// <summary>BD_01=23 | Nome da Empresa Executora</summary>
+    [Column("NM_EMPRESA_EXECUTORA")]
+    [MaxLength(255)]
+    public string? NmEmpresaExecutora { get; set; }
+
+    /// <summary>BD_01=59 | Nº do Contrato (da Supervisora)</summary>
+    [Column("NR_CONTRATO_SUPERVISORA")]
+    [MaxLength(255)]
+    public string? NrContratoSupervisora { get; set; }
+
+    /// <summary>BD_01=62 | Nome do arquivo RVT relacionado</summary>
+    [Column("NM_ARQUIVO_RVT_RELACIONADO")]
+    [MaxLength(255)]
+    public string? NmArquivoRvtRelacionado { get; set; }
+
+    /// <summary>BD_01=63 | Código do E.M. no RVT relacionado</summary>
+    [Column("CD_ELEMENTO_MONITOR_RVT")]
+    [MaxLength(255)]
+    public string? CdElementoMonitorRvt { get; set; }
+
+    /// <summary>BD_01=64 | Nome do arquivo DAC relacionado</summary>
+    [Column("NM_ARQUIVO_DAC_RELACIONADO")]
+    [MaxLength(255)]
+    public string? NmArquivoDacRelacionado { get; set; }
+
+    /// <summary>BD_01=65 | Código do E.M. na DAC relacionada</summary>
+    [Column("CD_ELEMENTO_MONITOR_DAC")]
+    [MaxLength(255)]
+    public string? CdElementoMonitorDac { get; set; }
+
+    /// <summary>BD_01=66 | Nome do arquivo CNC relacionado</summary>
+    [Column("NM_ARQUIVO_CNC_RELACIONADO")]
+    [MaxLength(255)]
+    public string? NmArquivoCncRelacionado { get; set; }
+
+    /// <summary>BD_01=67 | Código do E.M. na CNC relacionada</summary>
+    [Column("CD_ELEMENTO_MONITOR_CNC")]
+    [MaxLength(255)]
+    public string? CdElementoMonitorCnc { get; set; }
+
+    /// <summary>BD_01=68 | Chave Primária no último RRA</summary>
+    [Column("CD_ULTIMO_RRA")]
+    [MaxLength(255)]
+    public string? CdUltimoRra { get; set; }
+
+    /// <summary>BD_01=69 | Chave Primária - Centro de Documentação (CEDOC)</summary>
+    [Column("CD_CEDOC")]
+    [MaxLength(255)]
+    public string? CdCedoc { get; set; }
 
     // ===================================================================
     // NAVEGAÇÃO

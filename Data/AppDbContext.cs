@@ -29,6 +29,12 @@ public class AppDbContext : DbContext
             entity.Property(e => e.NrLongitude)
                   .HasColumnType("NUMBER(12,6)");
 
+            entity.Property(e => e.NrLatitudeSirgas2000)
+                  .HasColumnType("NUMBER(12,3)");
+
+            entity.Property(e => e.NrLongitudeSirgas2000)
+                  .HasColumnType("NUMBER(12,3)");
+
             entity.Property(e => e.NrQuantidadeLitros)
                   .HasColumnType("NUMBER(16,8)");
 
