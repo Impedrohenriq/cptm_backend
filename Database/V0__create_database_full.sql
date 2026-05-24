@@ -330,8 +330,8 @@ CREATE TABLE TB_FDC_EEA_EF_FOTO (
     -- Número da fotografia do formulário (1=BD_01:70  2=71  3=72  4=73)
     NR_FOTO               NUMBER(1)       NOT NULL,
 
-    -- URL da fotografia no Azure Blob Storage
-    DS_URL_FOTO           VARCHAR2(1000),
+    -- Imagem binária (BLOB)
+    BL_FOTO               BLOB,
 
     -- Orientação padrão do formulário: "Paisagem/Horizontal"
     DS_ORIENTACAO         VARCHAR2(30)    DEFAULT 'Paisagem/Horizontal',
@@ -397,62 +397,7 @@ CREATE UNIQUE INDEX UQ_USUARIO_APP_EMAIL ON TB_USUARIO_APP (EMAIL);
 
 COMMIT;
 
-PROMPT [2/3] Consolidando schema de fotos por URL...
-
-BEGIN
-  EXECUTE IMMEDIATE 'ALTER TABLE TB_FDC_EEA_EF_FOTO ADD (DS_URL_FOTO VARCHAR2(1000))';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE != -01430 THEN
-      RAISE;
-    END IF;
-END;
-/
-
-BEGIN
-  EXECUTE IMMEDIATE 'ALTER TABLE TB_FDC_EEA_EF_FOTO MODIFY (DS_URL_FOTO VARCHAR2(1000))';
-EXCEPTION
-  WHEN OTHERS THEN
-    NULL;
-END;
-/
-
-BEGIN
-  EXECUTE IMMEDIATE 'CREATE INDEX IX_FOTO_URL ON TB_FDC_EEA_EF_FOTO (DS_URL_FOTO)';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE != -955 THEN
-      RAISE;
-    END IF;
-END;
-/
-
-DECLARE
-  v_null_count NUMBER;
-BEGIN
-  SELECT COUNT(*) INTO v_null_count
-    FROM TB_FDC_EEA_EF_FOTO
-   WHERE DS_URL_FOTO IS NULL;
-
-  IF v_null_count = 0 THEN
-    EXECUTE IMMEDIATE 'ALTER TABLE TB_FDC_EEA_EF_FOTO MODIFY (DS_URL_FOTO NOT NULL)';
-  END IF;
-END;
-/
-
-BEGIN
-  EXECUTE IMMEDIATE 'ALTER TABLE TB_FDC_EEA_EF_FOTO DROP COLUMN BL_FOTO';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE NOT IN (-904, -1430) THEN
-      RAISE;
-    END IF;
-END;
-/
-
-COMMIT;
-
-PROMPT [3/3] Carga opcional de exemplo/teste (V0_LOAD_SAMPLE_DATA=&V0_LOAD_SAMPLE_DATA)...
+PROMPT [2/2] Carga opcional de exemplo/teste (V0_LOAD_SAMPLE_DATA=&V0_LOAD_SAMPLE_DATA)...
 
 MERGE INTO TB_FDC_EEA_EF t
 USING (
@@ -473,7 +418,7 @@ WHEN MATCHED THEN UPDATE SET
   t.NM_MUNICIPIO = 'Sao Paulo',
   t.NM_LINHA_CPTM = 'Linha 07 - Rubi',
   t.NM_ESTACAO_CPTM = 'Estacao Exemplo',
-  t.DS_OBSERVACOES_CADASTRO = 'Registro de teste: amostra de como ficara a URL da foto.'
+  t.DS_OBSERVACOES_CADASTRO = 'Registro de teste: estrutura atual com foto em BLOB.'
 WHEN NOT MATCHED THEN INSERT (
   CHAVE_PRIMARIA_MA,
   NR_ELEMENTO_MONIT,
@@ -501,7 +446,7 @@ WHEN NOT MATCHED THEN INSERT (
   'Sao Paulo',
   'Linha 07 - Rubi',
   'Estacao Exemplo',
-  'Registro de teste: amostra de como ficara a URL da foto.'
+  'Registro de teste: estrutura atual com foto em BLOB.'
 );
 
 MERGE INTO TB_FDC_EEA_EF_FOTO f
@@ -512,17 +457,14 @@ USING (
 ) s
 ON (f.CHAVE_PRIMARIA_MA = s.CHAVE_PRIMARIA_MA AND f.NR_FOTO = s.NR_FOTO)
 WHEN MATCHED THEN UPDATE SET
-  f.DS_URL_FOTO = 'https://examplestorage.blob.core.windows.net/cptm-photos/EEA.EF-A.2026-L.07-CPTM-N.000999_1.jpg',
   f.DS_ORIENTACAO = NVL(f.DS_ORIENTACAO, 'Paisagem/Horizontal')
 WHEN NOT MATCHED THEN INSERT (
   CHAVE_PRIMARIA_MA,
   NR_FOTO,
-  DS_URL_FOTO,
   DS_ORIENTACAO
 ) VALUES (
   'EEA.EF-A.2026-L.07-CPTM-N.000999',
   1,
-  'https://examplestorage.blob.core.windows.net/cptm-photos/EEA.EF-A.2026-L.07-CPTM-N.000999_1.jpg',
   'Paisagem/Horizontal'
 );
 
@@ -558,20 +500,18 @@ SELECT
     '009998',
     TO_DATE('2026-04-17','YYYY-MM-DD'),
     'Efluente',
-    'Teste de integracao com URL de fotos no Azure Blob Storage.'
+    'Teste de integracao com foto armazenada em BLOB.'
 FROM DUAL
 WHERE UPPER('&V0_LOAD_SAMPLE_DATA') = 'Y';
 
 INSERT INTO TB_FDC_EEA_EF_FOTO (
     CHAVE_PRIMARIA_MA,
     NR_FOTO,
-    DS_URL_FOTO,
     DS_ORIENTACAO
 )
 SELECT
     'EEA.EF-A.2026-L.08-CPTM-N.009998',
     1,
-    'https://examplestorage.blob.core.windows.net/cptm-photos/EEA.EF-A.2026-L.08-CPTM-N.009998/1.jpg',
     'Paisagem/Horizontal'
 FROM DUAL
 WHERE UPPER('&V0_LOAD_SAMPLE_DATA') = 'Y';
@@ -579,13 +519,11 @@ WHERE UPPER('&V0_LOAD_SAMPLE_DATA') = 'Y';
 INSERT INTO TB_FDC_EEA_EF_FOTO (
     CHAVE_PRIMARIA_MA,
     NR_FOTO,
-    DS_URL_FOTO,
     DS_ORIENTACAO
 )
 SELECT
     'EEA.EF-A.2026-L.08-CPTM-N.009998',
     2,
-    'https://examplestorage.blob.core.windows.net/cptm-photos/EEA.EF-A.2026-L.08-CPTM-N.009998/2.jpg',
     'Paisagem/Horizontal'
 FROM DUAL
 WHERE UPPER('&V0_LOAD_SAMPLE_DATA') = 'Y';
@@ -596,7 +534,7 @@ PROMPT Validacao (sai linha apenas quando V0_LOAD_SAMPLE_DATA=Y)...
 SELECT
   f.CHAVE_PRIMARIA_MA,
   COUNT(*) AS TOTAL_FOTOS,
-  MIN(CASE WHEN f.DS_URL_FOTO IS NOT NULL THEN 1 ELSE 0 END) AS URL_PREENCHIDA
+  MIN(CASE WHEN f.BL_FOTO IS NOT NULL THEN 1 ELSE 0 END) AS BLOB_PREENCHIDO
 FROM TB_FDC_EEA_EF_FOTO f
 WHERE f.CHAVE_PRIMARIA_MA = 'EEA.EF-A.2026-L.08-CPTM-N.009998'
   AND UPPER('&V0_LOAD_SAMPLE_DATA') = 'Y'

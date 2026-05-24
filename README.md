@@ -164,6 +164,21 @@ Regras importantes:
 - Em producao, usar variaveis de ambiente/secret manager.
 - Se Azure Blob nao estiver disponivel, manter AzureBlob:Enabled=false.
 
+Configuracao segura recomendada para Development (PowerShell):
+
+```powershell
+$env:ConnectionStrings__OracleDB="User Id=cptmapp;Password=<SUA_SENHA>;Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=XEPDB1)));"
+```
+
+Opcional com persistencia no usuario Windows:
+
+```powershell
+setx ConnectionStrings__OracleDB "User Id=cptmapp;Password=<SUA_SENHA>;Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=XEPDB1)));"
+```
+
+Observacao:
+- O arquivo appsettings.Development.json pode ficar sem credencial (OracleDB vazio) para evitar exposicao de senha no repositorio.
+
 ---
 
 ## 7) Configuracao do Frontend

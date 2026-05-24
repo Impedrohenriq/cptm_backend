@@ -1,87 +1,54 @@
-# Database: Integração com Azure Blob Storage
+# Database: Estado Atual e Evolucao Planejada
 
-Este README descreve o que é necessário no banco de dados e na infraestrutura para armazenar fotos no Azure Blob Storage e gravar apenas a URL (`DS_URL_FOTO`) na tabela `TB_FDC_EEA_EF_FOTO`.
+Este README documenta o estado atual do banco no backend e o plano de evolucao para fotos por URL.
 
-Resumo rápido:
+## Estado atual (em uso)
 
-- As imagens não são mais salvas como BLOBs no banco; em vez disso salvamos o URL público (ou SAS) em `DS_URL_FOTO` (VARCHAR2(1000)).
-- Use `V0__create_database_full.sql` para criação completa do zero em um único arquivo (standalone, sem dependências).
-- `V1__create_tables.sql` fica apenas como referência histórica da modelagem base.
+- O backend atual salva fotografias em BLOB na coluna `BL_FOTO` da tabela `TB_FDC_EEA_EF_FOTO`.
+- O script alinhado com o backend atual e o `V0__create_database_full.sql`.
+- A modelagem base historica permanece no `V1__create_tables.sql`.
 
-Requisitos Azure
+Resumo:
 
-- Storage Account (standard ou premium) criada na subscription desejada.
-- Container dedicado (ex.: `cptm-photos`). Recomenda-se não usar o container `$root`.
-- Política de acesso:
-  - Opção 1 (simples): container com acesso público `Blob` para permitir URLs diretas.
-  - Opção 2 (recomendada em produção): container privado + gerar SAS temporário para acesso público, ou usar CDN / backend proxy para servir imagens.
-- CORS: configurar CORS no Storage Account para permitir o domínio do frontend (ex.: `https://app.example.com`) e métodos `GET, POST, PUT` conforme necessário.
+- Fotos: `BL_FOTO` (BLOB)
+- Tabela de fotos: `TB_FDC_EEA_EF_FOTO`
+- Relacao: `TB_FDC_EEA_EF_FOTO.CHAVE_PRIMARIA_MA` -> `TB_FDC_EEA_EF.CHAVE_PRIMARIA_MA`
 
-Configuração no backend
+## Divergencia corrigida
 
-- Variáveis/keys esperadas (exemplo em `appsettings.json`):
+A divergencia entre script e backend foi corrigida para o estado atual:
 
-  "AzureBlob": {
-  "ConnectionString": "<AZURE_STORAGE_CONNECTION_STRING>",
-  "ContainerName": "cptm-photos",
-  "BaseUrl": "https://`<account>`.blob.core.windows.net/cptm-photos"  -- opcional
-  }
-- Em produção, coloque a `ConnectionString` no Key Vault ou em variáveis de ambiente e não commit no código.
-- Alternativa segura: configurar Managed Identity para o App Service/VM e autenticar via `DefaultAzureCredential`.
+- `V0__create_database_full.sql` agora esta coerente com persistencia em BLOB.
+- O bloco intermediario que migrava para `DS_URL_FOTO` no V0 foi removido para evitar incompatibilidade com a API atual.
 
-Boas práticas de naming e conteúdo
+## Evolucao planejada (futuro)
 
-- Nome sugerido para blobs: `<chave_primaria_ma>/<nr_foto>.<ext>`. Exemplo:
-  `EEA.EF-A.2026-L.07-CPTM-N.000999/1.jpg`
-- Armazene o `Content-Type` correto ao fazer upload (ex.: `image/jpeg`, `image/png`).
-- Use metadados opcionais para registrar `uploadedBy`, `uploadedAt`.
+Mais para frente, queremos atualizar a aplicacao para salvar fotos por URL no banco, em vez de BLOB.
 
-CORS example (portal):
+Direcao planejada:
 
-- Allowed origins: `https://seu-frontend` (ou `*` em dev)
-- Allowed methods: `GET, PUT, POST` (ajustar conforme o fluxo)
-- Allowed headers: `*`
-- Exposed headers: `x-ms-*`
-- Max age: `3600`
+1. Criar/usar coluna `DS_URL_FOTO` (VARCHAR2(1000)) na `TB_FDC_EEA_EF_FOTO`.
+2. Fazer upload de imagem para Azure Blob Storage no backend.
+3. Persistir somente URL (publica ou SAS) no banco.
+4. Migrar dados historicos de `BL_FOTO` para URL.
+5. Remover `BL_FOTO` somente apos validacao completa.
 
-Migração de BLOBs existentes (passos sugeridos)
+## Quando iniciar a migracao para URL
 
-1. Executar `V0__create_database_full.sql` (ele já inclui as etapas de ajuste para `DS_URL_FOTO`).
-2. Criar um utilitário (script C# / Node) que:
-   - Faz SELECT nos registros com BLOB existente (`BL_FOTO` ou coluna histórica).
-   - Para cada foto, faz upload para o Azure Blob seguindo o padrão de nome.
-   - Atualiza `TB_FDC_EEA_EF_FOTO.DS_URL_FOTO` com o URL público/SAS retornado.
-   - Registra erros e re-tentativas; não remova os BLOBs até validar tudo.
-3. Após validação completa, remover coluna BLOB (opcional) e ajustar triggers/índices.
+Passos recomendados:
 
-Notas de integração backend ↔ frontend
+1. Atualizar modelo/DTO/controller para trafegar URL no lugar de Base64.
+2. Integrar de ponta a ponta com `AzureBlobStorageService`.
+3. Criar script de migracao para converter BLOB legado em URL.
+4. Adicionar testes de criacao, leitura e atualizacao com URL.
+5. So entao ajustar script principal para remover BLOB.
 
-- O backend espera `DS_URL_FOTO` preenchido ao ler formulários retornados pela API.
-- Quando o frontend envia novas fotos enquanto está online, a aplicação pode:
-  - Fazer upload diretamente ao backend que usa `AzureBlobStorageService` para enviar ao Azure;
-  - Ou (se arquitetado) enviar diretamente ao Azure (SAS/upload client) e enviar a URL ao backend.
-- Se optar por upload direto do cliente, garantir que o backend valide/sanitize a URL antes de persistir.
+## Scripts no diretorio Database
 
-Segurança
+- `V0__create_database_full.sql`: script principal para criacao completa (estado atual BLOB).
+- `V1__create_tables.sql`: referencia historica da modelagem base.
 
-- Não armazene `ConnectionString` em repositório. Use Azure Key Vault ou variáveis de ambiente.
-- Revogue SAS ou rotacione chaves quando necessário.
-- Controle quem pode apagar blobs (RBAC ou roles no app).
+## Execucao do V0
 
-Exemplo rápido de URL esperado
-
-https://`<account>`.blob.core.windows.net/cptm-photos/EEA.EF-A.2026-L.07-CPTM-N.000999/1.jpg
-
-Referências dos scripts no diretório `Database`:
-
-- `V0__create_database_full.sql` — script mestre standalone para criação completa e modelagem do zero
-- `V1__create_tables.sql` — referência da modelagem base (não é necessário para executar o V0)
-
-Criação geral em um comando:
-
-1. `V0__create_database_full.sql`
-
-Modo de execução do V0:
-
-1. Estrutura apenas (padrão): manter `DEFINE V0_LOAD_SAMPLE_DATA = N`
+1. Estrutura apenas (padrao): manter `DEFINE V0_LOAD_SAMPLE_DATA = N`
 2. Estrutura + dados de exemplo/teste: alterar para `DEFINE V0_LOAD_SAMPLE_DATA = Y`
