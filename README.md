@@ -23,6 +23,10 @@ Disponibilizar endpoints para:
 
 Dependencias principais em [CPTM_Backend/CPTM_Backend.csproj](CPTM_Backend/CPTM_Backend.csproj).
 
+Guia dedicado de seguranca:
+
+- [CPTM_Backend/SECURITY.md](CPTM_Backend/SECURITY.md)
+
 ## 3. Arquitetura Aplicada
 
 Estrutura principal:

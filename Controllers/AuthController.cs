@@ -1,10 +1,14 @@
 using System.Text.RegularExpressions;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using CPTM_Backend.Data;
 using CPTM_Backend.DTOs;
 using CPTM_Backend.Models;
 using CPTM_Backend.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CPTM_Backend.Controllers;
 
@@ -14,10 +18,12 @@ namespace CPTM_Backend.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IConfiguration _configuration;
 
-    public AuthController(AppDbContext db)
+    public AuthController(AppDbContext db, IConfiguration configuration)
     {
         _db = db;
+        _configuration = configuration;
     }
 
     [HttpPost("register")]
@@ -111,10 +117,14 @@ public class AuthController : ControllerBase
         _db.Usuarios.Add(user);
         await _db.SaveChangesAsync();
 
+        var (token, expiresAtUtc) = BuildJwtToken(user);
+
         return StatusCode(StatusCodes.Status201Created, new AuthResponseDto
         {
             Success = true,
-            User = ToAuthUserDto(user)
+            User = ToAuthUserDto(user),
+            Token = token,
+            ExpiresAtUtc = expiresAtUtc
         });
     }
 
@@ -149,11 +159,51 @@ public class AuthController : ControllerBase
             });
         }
 
+        var (token, expiresAtUtc) = BuildJwtToken(user);
+
         return Ok(new AuthResponseDto
         {
             Success = true,
-            User = ToAuthUserDto(user)
+            User = ToAuthUserDto(user),
+            Token = token,
+            ExpiresAtUtc = expiresAtUtc
         });
+    }
+
+    private (string token, DateTime expiresAtUtc) BuildJwtToken(UsuarioApp user)
+    {
+        var issuer = _configuration["Jwt:Issuer"] ?? "CPTM.Backend";
+        var audience = _configuration["Jwt:Audience"] ?? "CPTM.Frontend";
+        var key = _configuration["Jwt:Key"];
+
+        if (string.IsNullOrWhiteSpace(key) || key.Length < 32)
+            throw new InvalidOperationException("Jwt:Key nao configurada corretamente.");
+
+        var expiresAtUtc = DateTime.UtcNow.AddHours(8);
+        var credentials = new SigningCredentials(
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, user.Id),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.UniqueName, user.NomeExibicao),
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.NomeExibicao),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, user.IsGestor ? "Gestor" : "Inspetor")
+        };
+
+        var jwt = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            notBefore: DateTime.UtcNow,
+            expires: expiresAtUtc,
+            signingCredentials: credentials);
+
+        return (new JwtSecurityTokenHandler().WriteToken(jwt), expiresAtUtc);
     }
 
     private static bool EmailValido(string email)

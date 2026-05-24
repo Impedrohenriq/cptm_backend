@@ -30,4 +30,6 @@ public class AuthResponseDto
     public bool Success { get; set; }
     public string? Error { get; set; }
     public AuthUserDto? User { get; set; }
+    public string? Token { get; set; }
+    public DateTime? ExpiresAtUtc { get; set; }
 }

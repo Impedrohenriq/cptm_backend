@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using CPTM_Backend.Data;
 using CPTM_Backend.DTOs;
@@ -8,11 +9,14 @@ using System.Text.RegularExpressions;
 namespace CPTM_Backend.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/formularios-efluente")]
 [Produces("application/json")]
 public class FormularioEfluenteController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private const int MaxFotosPorFormulario = 4;
+    private const int MaxTamanhoFotoBytes = 5 * 1024 * 1024;
 
     public FormularioEfluenteController(AppDbContext db) => _db = db;
 
@@ -77,6 +81,8 @@ public class FormularioEfluenteController : ControllerBase
     public async Task<IActionResult> Criar([FromBody] FormularioEfluenteDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (!TryValidarFotos(dto.Fotos, out var erroFotos))
+            return BadRequest(erroFotos);
 
         dto.ChavePrimariaMa = await GerarChavePrimariaMaAsync(dto);
 
@@ -104,6 +110,8 @@ public class FormularioEfluenteController : ControllerBase
     public async Task<IActionResult> Atualizar(string chavePrimaria, [FromBody] FormularioEfluenteDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (!TryValidarFotos(dto.Fotos, out var erroFotos))
+            return BadRequest(erroFotos);
 
         if (string.IsNullOrWhiteSpace(dto.ChavePrimariaMa))
             dto.ChavePrimariaMa = chavePrimaria;
@@ -390,5 +398,58 @@ public class FormularioEfluenteController : ControllerBase
                 DsOrientacao    = fDto.DsOrientacao ?? "Paisagem/Horizontal"
             });
         }
+    }
+
+    private static bool TryValidarFotos(List<FotoDto>? fotos, out string? erro)
+    {
+        erro = null;
+
+        if (fotos is null || fotos.Count == 0)
+            return true;
+
+        if (fotos.Count > MaxFotosPorFormulario)
+        {
+            erro = "O formulário permite no máximo 4 fotos.";
+            return false;
+        }
+
+        var hasDuplicidade = fotos
+            .GroupBy(f => f.NrFoto)
+            .Any(g => g.Count() > 1);
+
+        if (hasDuplicidade)
+        {
+            erro = "Não é permitido repetir o número da foto no mesmo formulário.";
+            return false;
+        }
+
+        foreach (var foto in fotos)
+        {
+            if (foto.NrFoto < 1 || foto.NrFoto > MaxFotosPorFormulario)
+            {
+                erro = "O número da foto deve estar entre 1 e 4.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(foto.FotoBase64))
+                continue;
+
+            try
+            {
+                var bytes = Convert.FromBase64String(foto.FotoBase64);
+                if (bytes.Length > MaxTamanhoFotoBytes)
+                {
+                    erro = "Cada foto deve ter no máximo 5 MB.";
+                    return false;
+                }
+            }
+            catch (FormatException)
+            {
+                erro = "Uma ou mais fotos possuem Base64 inválido.";
+                return false;
+            }
+        }
+
+        return true;
     }
 }
