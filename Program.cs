@@ -8,6 +8,12 @@ using CPTM_Backend.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Fotos trafegam em Base64 no JSON e podem aumentar bastante o payload.
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 80L * 1024L * 1024L; // 80 MB
+});
+
 // ── Oracle via Entity Framework Core ────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("OracleDB")));
@@ -17,31 +23,44 @@ var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>() ?? [];
 var isDevelopment = builder.Environment.IsDevelopment();
+var allowAnyOriginForDemo = builder.Configuration.GetValue<bool>("Cors:AllowAnyOriginForDemo");
 
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
-        policy.SetIsOriginAllowed(origin =>
-              {
-                  if (allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
-                  {
-                      return true;
-                  }
+    {
+        if (isDevelopment && allowAnyOriginForDemo)
+        {
+            policy
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+            return;
+        }
 
-                  if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                  {
-                      return false;
-                  }
+        policy
+            .SetIsOriginAllowed(origin =>
+            {
+                if (allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
 
-                  var isLocalHost = uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
-                                 || uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                {
+                    return false;
+                }
 
-                  var isHttp = uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase)
-                            || uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase);
+                var isLocalHost = uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                               || uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase);
 
-                  return isDevelopment && isLocalHost && isHttp;
-              })
-              .AllowAnyMethod()
-              .AllowAnyHeader()));
+                var isHttp = uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase)
+                          || uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase);
+
+                return isDevelopment && isLocalHost && isHttp;
+            })
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    }));
 
 // ── Controllers + Swagger ────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"];

@@ -91,7 +91,9 @@ public class FormularioEfluenteController : ControllerBase
         AdicionarFotos(model, dto.Fotos);
 
         _db.Formularios.Add(model);
-        await _db.SaveChangesAsync();
+        var saveError = await TrySaveChangesComDiagnosticoAsync();
+        if (saveError is not null)
+            return BadRequest(saveError);
 
         return CreatedAtAction(
             nameof(ObterPorId),
@@ -133,7 +135,10 @@ public class FormularioEfluenteController : ControllerBase
         existente.Fotos.Clear();
         AdicionarFotos(existente, dto.Fotos);
 
-        await _db.SaveChangesAsync();
+        var saveError = await TrySaveChangesComDiagnosticoAsync();
+        if (saveError is not null)
+            return BadRequest(saveError);
+
         return NoContent();
     }
 
@@ -386,15 +391,15 @@ public class FormularioEfluenteController : ControllerBase
     {
         if (fotos is null) return;
 
-        foreach (var fDto in fotos)
+        foreach (var fDto in fotos.Where(f => f is not null))
         {
+            _ = TryDecodeFotoBase64(fDto.FotoBase64, out var fotoBytes);
+
             model.Fotos.Add(new FotoEfluente
             {
                 ChavePrimariaMa = model.ChavePrimariaMa,
                 NrFoto          = fDto.NrFoto,
-                BlFoto          = fDto.FotoBase64 is not null
-                                    ? Convert.FromBase64String(fDto.FotoBase64)
-                                    : null,
+                BlFoto          = fotoBytes,
                 DsOrientacao    = fDto.DsOrientacao ?? "Paisagem/Horizontal"
             });
         }
@@ -407,13 +412,18 @@ public class FormularioEfluenteController : ControllerBase
         if (fotos is null || fotos.Count == 0)
             return true;
 
-        if (fotos.Count > MaxFotosPorFormulario)
+        var fotosValidas = fotos.Where(f => f is not null).ToList();
+
+        if (fotosValidas.Count == 0)
+            return true;
+
+        if (fotosValidas.Count > MaxFotosPorFormulario)
         {
             erro = "O formulário permite no máximo 4 fotos.";
             return false;
         }
 
-        var hasDuplicidade = fotos
+        var hasDuplicidade = fotosValidas
             .GroupBy(f => f.NrFoto)
             .Any(g => g.Count() > 1);
 
@@ -423,7 +433,7 @@ public class FormularioEfluenteController : ControllerBase
             return false;
         }
 
-        foreach (var foto in fotos)
+        foreach (var foto in fotosValidas)
         {
             if (foto.NrFoto < 1 || foto.NrFoto > MaxFotosPorFormulario)
             {
@@ -432,24 +442,116 @@ public class FormularioEfluenteController : ControllerBase
             }
 
             if (string.IsNullOrWhiteSpace(foto.FotoBase64))
-                continue;
-
-            try
             {
-                var bytes = Convert.FromBase64String(foto.FotoBase64);
-                if (bytes.Length > MaxTamanhoFotoBytes)
-                {
-                    erro = "Cada foto deve ter no máximo 5 MB.";
-                    return false;
-                }
+                erro = "A foto foi enviada sem conteúdo. Selecione novamente a imagem antes de sincronizar.";
+                return false;
             }
-            catch (FormatException)
+
+            if (!TryDecodeFotoBase64(foto.FotoBase64, out var bytes))
             {
                 erro = "Uma ou mais fotos possuem Base64 inválido.";
+                return false;
+            }
+
+            if (bytes is not null && bytes.Length > MaxTamanhoFotoBytes)
+            {
+                erro = "Cada foto deve ter no máximo 5 MB.";
                 return false;
             }
         }
 
         return true;
+    }
+
+    private static bool TryDecodeFotoBase64(string? fotoBase64, out byte[]? bytes)
+    {
+        bytes = null;
+
+        if (string.IsNullOrWhiteSpace(fotoBase64))
+            return true;
+
+        var conteudo = ExtrairConteudoBase64(fotoBase64);
+        if (string.IsNullOrWhiteSpace(conteudo))
+            return false;
+
+        if (TryFromBase64(conteudo, out bytes))
+        {
+            return true;
+        }
+
+        // Fallback para clientes que enviam base64url (- e _) no lugar de + e /.
+        var base64UrlNormalizado = conteudo.Replace('-', '+').Replace('_', '/');
+        if (base64UrlNormalizado.Length % 4 != 0)
+        {
+            base64UrlNormalizado = base64UrlNormalizado.PadRight(base64UrlNormalizado.Length + (4 - (base64UrlNormalizado.Length % 4)), '=');
+        }
+
+        return TryFromBase64(base64UrlNormalizado, out bytes);
+    }
+
+    private static bool TryFromBase64(string conteudo, out byte[]? bytes)
+    {
+        bytes = null;
+
+        try
+        {
+            bytes = Convert.FromBase64String(conteudo);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    private static string ExtrairConteudoBase64(string valor)
+    {
+        var normalized = valor.Trim();
+        var commaIndex = normalized.IndexOf(',');
+
+        if (normalized.StartsWith("data:", StringComparison.OrdinalIgnoreCase) && commaIndex >= 0)
+        {
+            normalized = normalized[(commaIndex + 1)..];
+        }
+
+        return normalized.Replace("\r", string.Empty)
+                         .Replace("\n", string.Empty)
+                         .Replace(" ", string.Empty)
+                         .Replace("\t", string.Empty);
+    }
+
+    private async Task<string?> TrySaveChangesComDiagnosticoAsync()
+    {
+        try
+        {
+            await _db.SaveChangesAsync();
+            return null;
+        }
+        catch (DbUpdateException ex)
+        {
+            var detalhes = ex.InnerException?.Message ?? ex.Message;
+
+            if (detalhes.Contains("ORA-00904", StringComparison.OrdinalIgnoreCase)
+                && detalhes.Contains("BL_FOTO", StringComparison.OrdinalIgnoreCase))
+            {
+                return "A estrutura do banco esta desatualizada para fotos (coluna BL_FOTO ausente). Execute o script Database/V3__fix_foto_schema_compat.sql.";
+            }
+
+            if (detalhes.Contains("SQ_FDC_EEA_EF_FOTO", StringComparison.OrdinalIgnoreCase)
+                || detalhes.Contains("ORA-02289", StringComparison.OrdinalIgnoreCase)
+                || detalhes.Contains("ORA-04098", StringComparison.OrdinalIgnoreCase)
+                || detalhes.Contains("ORA-04088", StringComparison.OrdinalIgnoreCase))
+            {
+                return "O banco nao conseguiu gerar ID para a foto (sequence/trigger ausente ou invalida). Execute o script Database/V3__fix_foto_schema_compat.sql.";
+            }
+
+            if (detalhes.Contains("ORA-01461", StringComparison.OrdinalIgnoreCase)
+                || detalhes.Contains("ORA-12899", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Falha ao persistir a imagem no banco. Tente uma foto menor e verifique se a coluna BL_FOTO esta como BLOB.";
+            }
+
+            return "Falha ao persistir o formulario com foto. Verifique a estrutura da tabela TB_FDC_EEA_EF_FOTO e tente novamente.";
+        }
     }
 }

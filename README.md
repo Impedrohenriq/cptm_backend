@@ -19,7 +19,6 @@ Disponibilizar endpoints para:
 - Entity Framework Core 9
 - Oracle.EntityFrameworkCore
 - Swashbuckle (Swagger/OpenAPI)
-- Azure.Storage.Blobs (opcional por feature flag)
 
 Dependencias principais em [CPTM_Backend/CPTM_Backend.csproj](CPTM_Backend/CPTM_Backend.csproj).
 
@@ -83,9 +82,10 @@ Chaves importantes:
 
 - ConnectionStrings:OracleDB
 - Cors:AllowedOrigins
-- AzureBlob:Enabled
-- AzureBlob:ConnectionString
-- AzureBlob:ContainerName
+
+Observacao sobre fotos:
+
+- as imagens da secao final do formulario sao recebidas como Base64 e persistidas no Oracle na coluna BLOB `BL_FOTO` da tabela `TB_FDC_EEA_EF_FOTO`.
 
 Exemplo de variavel de ambiente no PowerShell:
 

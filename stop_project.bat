@@ -20,6 +20,10 @@ for %%P in (5173 5000 5001) do (
 )
 
 echo.
+echo Encerrando processo ngrok (se estiver em execucao)...
+taskkill /IM ngrok.exe /F >nul 2>&1
+
+echo.
 echo [2/2] Projeto parado (se estava em execucao nas portas padrao).
 echo.
 exit /b 0

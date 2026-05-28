@@ -44,6 +44,9 @@ Persistir com integridade os dados do formulario FDC-EEA.EF, incluindo:
 - [CPTM_Backend/Database/V2__add_missing_bd01_columns.sql](CPTM_Backend/Database/V2__add_missing_bd01_columns.sql)
 	migracao incremental idempotente para bancos existentes que ainda nao tenham as novas colunas BD_01.
 
+- [CPTM_Backend/Database/V3__fix_foto_schema_compat.sql](CPTM_Backend/Database/V3__fix_foto_schema_compat.sql)
+	correcao de compatibilidade da tabela de fotos (BL_FOTO BLOB + sequence/trigger de ID_FOTO).
+
 ## 4. Como Aplicar os Scripts
 
 Nova base (recomendado):
@@ -54,6 +57,7 @@ Nova base (recomendado):
 Base ja existente:
 
 1. executar V2 para adicionar colunas faltantes e ajustar tamanho de observacoes.
+2. executar V3 quando upload/sincronizacao com foto falhar por schema legado de fotos.
 
 ## 5. Regras de Integridade
 

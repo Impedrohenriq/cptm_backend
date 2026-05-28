@@ -70,6 +70,10 @@ public class AppDbContext : DbContext
 
             entity.Property(e => e.DsOrientacao)
                   .HasDefaultValue("Paisagem/Horizontal");
+
+            // Mapeamento explicito para evitar variação de provider em colunas binárias Oracle.
+            entity.Property(e => e.BlFoto)
+                  .HasColumnType("BLOB");
         });
 
         // ── TB_USUARIO_APP ─────────────────────────────────────────────
