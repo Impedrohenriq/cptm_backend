@@ -114,7 +114,6 @@ Os scripts ficam em [CPTM_Backend/Database](CPTM_Backend/Database).
 Resumo:
 
 - V0: criacao completa;
-- V1: referencia historica;
 - V2: migracao incremental para novas colunas BD_01.
 
 Detalhes completos no README de banco em [CPTM_Backend/Database/README.md](CPTM_Backend/Database/README.md).

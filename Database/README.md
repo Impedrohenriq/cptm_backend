@@ -38,9 +38,6 @@ Persistir com integridade os dados do formulario FDC-EEA.EF, incluindo:
 - [CPTM_Backend/Database/V0__create_database_full.sql](CPTM_Backend/Database/V0__create_database_full.sql)
 	script principal para criar tudo do zero, com opcao de carga de dados de exemplo.
 
-- [CPTM_Backend/Database/V1__create_tables.sql](CPTM_Backend/Database/V1__create_tables.sql)
-	referencia historica da modelagem base.
-
 - [CPTM_Backend/Database/V2__add_missing_bd01_columns.sql](CPTM_Backend/Database/V2__add_missing_bd01_columns.sql)
 	migracao incremental idempotente para bancos existentes que ainda nao tenham as novas colunas BD_01.
 

@@ -19,6 +19,8 @@ packages/
 
 ## Rider
 .idea/
+.vscode/
+.venv/
 
 ## OS
 .DS_Store
