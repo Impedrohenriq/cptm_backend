@@ -38,11 +38,8 @@ builder.Services.AddCors(options =>
                   var isHttp = uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase)
                             || uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase);
 
-                  var isNgrok = isDevelopment &&
-              (uri.Host.EndsWith(".ngrok.io", StringComparison.OrdinalIgnoreCase)
-               || uri.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase));
-
-                  return (isDevelopment && isLocalHost && isHttp) || isNgrok;
+                  var isNgrok = isDevelopment && uri.Host.EndsWith(".ngrok.io", StringComparison.OrdinalIgnoreCase);
+return (isDevelopment && isLocalHost && isHttp) || isNgrok;
               })
               .AllowAnyMethod()
               .AllowAnyHeader()));
@@ -125,13 +122,13 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseHsts();
-    app.UseHttpsRedirection();
 }
+
+app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapHealthChecks("/health", new HealthCheckOptions());
 app.MapControllers();
 app.Run();
-
 

@@ -1,0 +1,26 @@
+{
+  "ConnectionStrings": {
+    "OracleDB": "User Id=SEU_USUARIO;Password=SUA_SENHA;Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=XE)));"
+  },
+  "AzureBlob": {
+    "Enabled": true,
+    "ConnectionString": "SUA_CONNECTION_STRING_DO_AZURE_BLOB",
+    "ContainerName": "inspecoes-efluente",
+    "PublicAccess": true
+  },
+  "Jwt": {
+    "Issuer": "CPTM.Backend",
+    "Audience": "CPTM.Frontend",
+    "Key": "ALTERE_ESTA_CHAVE_JWT_COM_NO_MINIMO_32_CARACTERES"
+  },
+  "Cors": {
+    "AllowedOrigins": [ "http://localhost:5173" ]
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
